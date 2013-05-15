@@ -19,7 +19,7 @@ eqn NUMBER_OF_CARDS = 3;
 sort CardStatusMapping = CarrierId -> LocationId;
 
 map default_card_mapping, default_card_values : CardStatusMapping;
-eqn default_card_mapping = default_card_values[TLS->-1][NS->-1][SYNTUS->-1];
+eqn default_card_mapping = default_card_values[TLS -> -1][NS -> -1][SYNTUS -> -1];
 
 % Mapping from two location ids two the price of that route
 map prices : LocationId # LocationId -> Real;
@@ -79,10 +79,10 @@ proc
       );
 
   CarrierReader(carrier_id : CarrierId, location_id : LocationId) = 
-    sum card_id : Int . (101 <= card_id && card_id < 101 + NUMBER_OF_CARDS) ->
-      read_card(card_id,carrier_id) .
+    sum card_id : CardId . (101 <= card_id && card_id < 101 + NUMBER_OF_CARDS) ->
+      read_card(card_id, carrier_id) .
       sum received_location_id : LocationId, received_location_id_tls : LocationId, received_credit : Real .
-        (receive_card_info(card_id, received_location_id, received_location_id_tls, received_credit) .
+        receive_card_info(card_id, received_location_id, received_location_id_tls, received_credit) .
       (
         (received_location_id != -1) ->
           (write(card_id, -1, received_credit - prices(location_id, received_location_id)) .
@@ -94,32 +94,52 @@ proc
 
         (received_location_id == -1 && received_location_id_tls == -1) ->
           (write(card_id, location_id, received_credit) .
-          CarrierReader(carrier_id, location_id)))
+          CarrierReader(carrier_id, location_id))
       );
 
-  OvercheckReader(location : Int) = 
-     sum card_id:Int . (101<=card_id&&card_id<101+NUMBER_OF_CARDS) -> read_card(card_id,TLS) 
-     . sum data:CardStatusMapping,credit : Real . (0<=credit&&credit<=10) -> (receive_card_info_tls(card_id, data, credit)
-     . (((data(NS) != -1)     -> write_tls(card_id, data[NS->-1][TLS->location]    , credit-1) . OvercheckReader(location)) %uitchecken bij ns, inchecken bij tls
-     + ((data(SYNTUS) != -1) -> write_tls(card_id, data[SYNTUS->-1][TLS->location], credit-1) . OvercheckReader(location)) %uitchecken bij syntus, inchecken bij tls
-     + ((data(TLS) != -1)    -> write_tls(card_id, data[TLS->location]               , credit-1) . OvercheckReader(location))));   %TODO
-     %                            ^---   hierboven moet worden vastgesteld met welke vervoerder is gereisd.
-%);
+  OvercheckReader(location_id : LocationId) = 
+    sum received_card_id : CardId . (101 <= received_card_id && received_card_id < 101 + NUMBER_OF_CARDS) -> read_card(received_card_id, TLS) .
+
+      sum received_card_status : CardStatusMapping, received_credit : Real . (receive_card_info_tls(received_card_id, received_card_status, received_credit)) .
+      (
+
+        % Check out at NS, check in at TLS
+        (received_card_status(NS) != -1) ->
+          write_tls(received_card_id, received_card_status[NS-> -1][TLS-> location_id], received_credit - prices(received_card_status(NS), location_id)) .
+          OvercheckReader(location_id) +
+
+
+        % Check out at Syntus, check in at TLS
+        (received_card_status(SYNTUS) != -1) ->
+          write_tls(received_card_id, received_card_status[SYNTUS-> -1][TLS -> location_id], received_credit - prices(received_card_status(SYNTUS), location_id)) .
+          OvercheckReader(location_id) +
       
+        (received_card_status(TLS) != -1) ->
+          write_tls(received_card_id, received_card_status[TLS -> location_id], received_credit - prices(received_card_status(TLS), location_id)) .
+          OvercheckReader(location_id)
+      );
 
+  System =
+    Card(101, default_card_mapping, 5) ||
+    Card(102, default_card_mapping, 5) ||
+    Card(103, default_card_mapping, 5) ||
+    CarrierReader(SYNTUS, 51) ||
+    CarrierReader(SYNTUS, 53) ||
+    OvercheckReader(53);
 
-  System = Card(101, default_card_mapping, 5) || Card(102, default_card_mapping, 5) || Card(103, default_card_mapping, 5) 
-         || CarrierReader(SYNTUS,51) || CarrierReader(SYNTUS,53) || OvercheckReader(53);
-
+% INITIALIZATION
+% ==============
 
 init
-   hide  ( {card_info, process, card_info_tls, process_tls},
-   allow ( {show, card_info, process, card_info_tls, process_tls},
-   comm({   send_card_info | receive_card_info -> card_info, 
-            show_card | read_card -> show,
-            write | update -> process, 
-            write_tls | update_tls -> process_tls,
-            send_card_info_tls | receive_card_info_tls -> card_info_tls}, 
-   System)));
-
+  hide({ card_info, process, card_info_tls, process_tls },
+    allow({ show, card_info, process, card_info_tls, process_tls },
+      comm({
+        send_card_info | receive_card_info -> card_info, 
+        show_card | read_card -> show,
+        write | update -> process, 
+        write_tls | update_tls -> process_tls,
+        send_card_info_tls | receive_card_info_tls -> card_info_tls
+      }, System)
+    )
+  );
 
