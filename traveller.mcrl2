@@ -22,16 +22,15 @@ map default_card_mapping, default_card_values : CardStatusMapping;
 eqn default_card_mapping = default_card_values[TLS -> -1][NS -> -1][SYNTUS -> -1];
 
 % Mapping from two location ids two the price of that route
-map prices : LocationId # LocationId -> Real;
+map prices, price_table : LocationId # LocationId -> Real;
 
-eqn prices(51, 52) = 1;
-eqn prices(52, 51) = 1;
+var location_x, location_y : LocationId;
+eqn location_x == location_y -> prices(location_x, location_y) = 0;
+    location_x != location_y -> prices(location_x, location_y) = price_table(min(location_x, location_y), max(location_x,location_y));
 
-eqn prices(52, 53) = 2;
-eqn prices(53, 52) = 2;
-
-eqn prices(51, 53) = 3;
-eqn prices(53, 51) = 3;
+eqn price_table(51, 52) = 1;
+eqn price_table(52, 53) = 2;
+eqn price_table(51, 53) = 3;
 
 % ACTIONS
 % =======
