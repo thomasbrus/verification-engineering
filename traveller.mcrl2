@@ -16,7 +16,7 @@ sort CardStatusMapping = Nat -> Int;
 map default_card_mapping, default_card_values : CardStatusMapping;
 eqn default_card_mapping = default_card_values[TLS->-1][NS->-1][SYNTUS->-1];
 
-% Twee locatie ids geven één prijs terug
+% Twee locatie ids geven Ã©Ã©n prijs terug
 map prices : LocationId # LocationId -> Real;
 
 eqn prices(51, 52) = 1;
