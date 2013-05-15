@@ -1,2 +1,2 @@
-verification-engineering
+Verification Engineering
 ========================
