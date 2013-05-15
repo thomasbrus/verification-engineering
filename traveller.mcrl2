@@ -1,22 +1,32 @@
-sort Data = Nat -> Int;    %Verzameling van check-in-gegevens van vervoerders (CarrierID geeft boolean ingecheckt)
+% Carrier ids
+map NS, SYNTUS, TLS : Nat;
+eqn TLS = 0;
+eqn NS = 1;
+eqn SYNTUS = 2;
 
-sort Price = Int # Int -> Nat;    %Twee locatie-id's geven één prijs terug
+var NUMBER_OF_CARDS : Nat;
+eqn NUMBER_OF_CARDS = 3;
 
-map travellers:Nat;
-map NS,SYNTUS,TLS:Nat;
-map default0,default: Data; %Lege verzamelingen
-map prices: Price;
+% Type alias
+sort LocationId = Int;
 
-eqn prices(51,52) = 1;
-eqn prices(52,53) = 2;
-eqn prices(51,53) = 3;
-eqn prices(53,51) = 3;
-eqn default = default0[TLS->-1][NS->-1][SYNTUS->-1];
+% Mapping van vervoerders naar locatie ids (of -1 als nog niet ingecheckt)
+sort CardStatusMapping = Nat -> Int;
 
-eqn travellers = 3;         %Aantal gedefinieerde reizigers	
-eqn TLS = 0;                %CarrierID van TLS
-eqn NS = 1;                 %CarrierID van NS
-eqn SYNTUS = 2;             %CarrierID van Syntus
+map default_card_mapping, default_card_values : CardStatusMapping;
+eqn default_card_mapping = default_card_values[TLS->-1][NS->-1][SYNTUS->-1];
+
+% Twee locatie ids geven één prijs terug
+map prices : LocationId # LocationId -> Real;
+
+eqn prices(51, 52) = 1;
+eqn prices(52, 51) = 1;
+
+eqn prices(52, 53) = 2;
+eqn prices(53, 52) = 2;
+
+eqn prices(51, 53) = 3;
+eqn prices(53, 51) = 3;
 
 
 
@@ -29,26 +39,26 @@ act
  rec_card_info: Int #  Int #  Int # Int;
  card_info: Int #  Int #  Int # Int;
 
- send_card_info_tls: Int # Data # Int;
- rec_card_info_tls: Int # Data # Int;
- card_info_tls: Int # Data # Int;
+ send_card_info_tls: Int # CardStatusMapping # Int;
+ rec_card_info_tls: Int # CardStatusMapping # Int;
+ card_info_tls: Int # CardStatusMapping # Int;
 
  write: Int #  Int # Int;
  update: Int #  Int # Int;
  process: Int #  Int # Int;
 
- write_tls: Int # Data # Int;
- update_tls: Int # Data # Int;
- process_tls: Int # Data # Int;
+ write_tls: Int # CardStatusMapping # Int;
+ update_tls: Int # CardStatusMapping # Int;
+ process_tls: Int # CardStatusMapping # Int;
 
 proc
-  Card(card_number : Int, credit : Int, data : Data) =  
+  Card(card_number : Int, credit : Int, card_data : CardStatusMapping) =  
      sum carrier_id:Nat .(0<=carrier_id && carrier_id<3) -> show_card(card_number,carrier_id)    
      . (   (carrier_id >  TLS) -> send_card_info(card_number, data(carrier_id), data(TLS), credit)                  %procedure bij vervoerders
                               . sum new_checked_in:Int,new_credit:Int . (0<=credit&&credit<=10) -> update(card_number, new_checked_in, new_credit)     
                               . Card(card_number, new_credit, data[carrier_id->new_checked_in][TLS->-1])
          + (carrier_id == TLS) -> send_card_info_tls(card_number, data, credit)                                     %procedure bij overchecken
-                              . sum new_data:Data,new_credit:Int . (0<=credit&&credit<=10) -> update_tls(card_number, new_data, new_credit)     
+                              . sum new_data:CardStatusMapping,new_credit:Int . (0<=credit&&credit<=10) -> update_tls(card_number, new_data, new_credit)     
                               . Card(card_number, new_credit, new_data));
 
   CarrierReader(carrier_id : Nat, location : Int) = 
@@ -60,7 +70,7 @@ proc
 
   OvercheckReader(location : Int) = 
      sum card_number:Int . (101<=card_number&&card_number<101+travellers) -> read_card(card_number,TLS) 
-     . sum data:Data,credit:Int . (0<=credit&&credit<=10) -> (rec_card_info_tls(card_number, data, credit)
+     . sum data:CardStatusMapping,credit:Int . (0<=credit&&credit<=10) -> (rec_card_info_tls(card_number, data, credit)
      . (((data(NS) != -1)     -> write_tls(card_number, data[NS->-1][TLS->location]    , credit-1) . OvercheckReader(location)) %uitchecken bij ns, inchecken bij tls
      + ((data(SYNTUS) != -1) -> write_tls(card_number, data[SYNTUS->-1][TLS->location], credit-1) . OvercheckReader(location)) %uitchecken bij syntus, inchecken bij tls
      + ((data(TLS) != -1)    -> write_tls(card_number, data[TLS->location]               , credit-1) . OvercheckReader(location))));   %TODO
@@ -82,3 +92,5 @@ init
             write_tls | update_tls -> process_tls,
             send_card_info_tls | rec_card_info_tls -> card_info_tls}, 
    System)));
+
+
