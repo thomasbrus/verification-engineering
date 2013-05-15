@@ -61,42 +61,54 @@ act
 % =========
 
 proc
-  Card(card_number : Int, credit : Real, card_data : CardStatusMapping) =
+  Card(card_id : Int, card_data : CardStatusMapping, credit : Real) =
     sum carrier_id : CarrierId . (0 <= carrier_id && carrier_id < 3) ->
-      show_card(card_number, carrier_id) .      
+      show_card(card_id, carrier_id) .      
       (
         % In case of carrier
         (carrier_id != TLS) ->
-          send_card_info(card_number, card_data(carrier_id), card_data(TLS), credit) .
-          sum new_checked_in : Int, new_credit : Real . update(card_number, new_checked_in, new_credit) .
-          Card(card_number, new_credit, card_data[carrier_id -> new_checked_in][TLS -> -1]) +
+          send_card_info(card_id, card_data(carrier_id), card_data(TLS), credit) .
+          sum updated_location_id : LocationId, updated_credit : Real . update(card_id, updated_location_id, updated_credit) .
+          Card(card_id, card_data[carrier_id -> updated_location_id][TLS -> -1], updated_credit) +
 
         % In case of TLS
         (carrier_id == TLS) ->
-          send_card_info_tls(card_number, card_data, credit) .
-          sum new_data : CardStatusMapping, new_credit : Real . update_tls(card_number, new_data, new_credit) .
-          Card(card_number, new_credit, new_data)
+          send_card_info_tls(card_id, card_data, credit) .
+          sum updated_card_status : CardStatusMapping, updated_credit : Real . update_tls(card_id, updated_card_status, updated_credit) .
+          Card(card_id, updated_card_status, updated_credit)
       );
 
-  CarrierReader(carrier_id : CarrierId, location : Int) = 
-     sum card_number:Int . (101<=card_number&&card_number<101+NUMBER_OF_CARDS) -> read_card(card_number,carrier_id) 
-     . sum checked_in:Int,checked_in_tls:Int,credit : Real . (0<=credit&&credit<=10) -> (receive_card_info(card_number,checked_in,checked_in_tls,credit) 
-     . ((checked_in != -1)                    -> (write(card_number, -1, credit-prices(location,checked_in)) . CarrierReader(carrier_id, location))        %uitcheckprocedure
-     + (checked_in == -1 && checked_in_tls != -1) -> (write(card_number, -1, credit-prices(location,checked_in)) . CarrierReader(carrier_id, location))        %uitcheckprocedure als is overgecheckt
-     + (checked_in == -1 && checked_in_tls == -1) -> (write(card_number, location , credit  ) . CarrierReader(carrier_id, location))));     %incheckprocedure         
+  CarrierReader(carrier_id : CarrierId, location_id : LocationId) = 
+    sum card_id : Int . (101 <= card_id && card_id < 101 + NUMBER_OF_CARDS) ->
+      read_card(card_id,carrier_id) .
+      sum received_location_id : LocationId, received_location_id_tls : LocationId, received_credit : Real .
+        (receive_card_info(card_id, received_location_id, received_location_id_tls, received_credit) .
+      (
+        (received_location_id != -1) ->
+          (write(card_id, -1, received_credit - prices(location_id, received_location_id)) .
+          CarrierReader(carrier_id, location_id)) +
+
+        (received_location_id == -1 && received_location_id_tls != -1) ->
+          (write(card_id, -1, received_credit - prices(location_id, received_location_id_tls)) .
+          CarrierReader(carrier_id, location_id)) +
+
+        (received_location_id == -1 && received_location_id_tls == -1) ->
+          (write(card_id, location_id, received_credit) .
+          CarrierReader(carrier_id, location_id)))
+      );
 
   OvercheckReader(location : Int) = 
-     sum card_number:Int . (101<=card_number&&card_number<101+NUMBER_OF_CARDS) -> read_card(card_number,TLS) 
-     . sum data:CardStatusMapping,credit : Real . (0<=credit&&credit<=10) -> (receive_card_info_tls(card_number, data, credit)
-     . (((data(NS) != -1)     -> write_tls(card_number, data[NS->-1][TLS->location]    , credit-1) . OvercheckReader(location)) %uitchecken bij ns, inchecken bij tls
-     + ((data(SYNTUS) != -1) -> write_tls(card_number, data[SYNTUS->-1][TLS->location], credit-1) . OvercheckReader(location)) %uitchecken bij syntus, inchecken bij tls
-     + ((data(TLS) != -1)    -> write_tls(card_number, data[TLS->location]               , credit-1) . OvercheckReader(location))));   %TODO
+     sum card_id:Int . (101<=card_id&&card_id<101+NUMBER_OF_CARDS) -> read_card(card_id,TLS) 
+     . sum data:CardStatusMapping,credit : Real . (0<=credit&&credit<=10) -> (receive_card_info_tls(card_id, data, credit)
+     . (((data(NS) != -1)     -> write_tls(card_id, data[NS->-1][TLS->location]    , credit-1) . OvercheckReader(location)) %uitchecken bij ns, inchecken bij tls
+     + ((data(SYNTUS) != -1) -> write_tls(card_id, data[SYNTUS->-1][TLS->location], credit-1) . OvercheckReader(location)) %uitchecken bij syntus, inchecken bij tls
+     + ((data(TLS) != -1)    -> write_tls(card_id, data[TLS->location]               , credit-1) . OvercheckReader(location))));   %TODO
      %                            ^---   hierboven moet worden vastgesteld met welke vervoerder is gereisd.
 %);
       
 
 
-  System =  Card(101, 5, default_card_mapping)|| Card(102, 5, default_card_mapping) || Card(103, 5, default_card_mapping) 
+  System = Card(101, default_card_mapping, 5) || Card(102, default_card_mapping, 5) || Card(103, default_card_mapping, 5) 
          || CarrierReader(SYNTUS,51) || CarrierReader(SYNTUS,53) || OvercheckReader(53);
 
 
