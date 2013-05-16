@@ -91,8 +91,12 @@ proc
           (write(card_id, -1, received_credit - prices(location_id, received_location_id_tls)) .
           CarrierReader(carrier_id, location_id)) +
 
-        (received_location_id == -1 && received_location_id_tls == -1) ->
+        (received_location_id == -1 && received_location_id_tls == -1 && received_credit > 0) ->
           (write(card_id, location_id, received_credit) .
+          CarrierReader(carrier_id, location_id)) +
+
+        (received_location_id == -1 && received_location_id_tls == -1 && received_credit <= 0) ->
+          (write(card_id, -1, received_credit) .
           CarrierReader(carrier_id, location_id))
       );
 
@@ -101,12 +105,10 @@ proc
 
       sum received_card_status : CardStatusMapping, received_credit : Real . (receive_card_info_tls(received_card_id, received_card_status, received_credit)) .
       (
-
         % Check out at NS, check in at TLS
         (received_card_status(NS) != -1) ->
           write_tls(received_card_id, received_card_status[NS-> -1][TLS-> location_id], received_credit - prices(received_card_status(NS), location_id)) .
           OvercheckReader(location_id) +
-
 
         % Check out at Syntus, check in at TLS
         (received_card_status(SYNTUS) != -1) ->
@@ -115,13 +117,17 @@ proc
       
         (received_card_status(TLS) != -1) ->
           write_tls(received_card_id, received_card_status[TLS -> location_id], received_credit - prices(received_card_status(TLS), location_id)) .
+          OvercheckReader(location_id) +
+
+        (received_card_status(TLS) == -1 && received_card_status(NS) == -1 && received_card_status(SYNTUS) == -1) ->
+          write_tls(received_card_id, received_card_status, received_credit) .
           OvercheckReader(location_id)
       );
 
   System =
     Card(101, default_card_mapping, 5) ||
     Card(102, default_card_mapping, 5) ||
-    Card(103, default_card_mapping, 5) ||
+    %Card(103, default_card_mapping, 5) ||
     CarrierReader(SYNTUS, 51) ||
     CarrierReader(SYNTUS, 53) ||
     OvercheckReader(53);
