@@ -1,0 +1,38 @@
+% FORMAL REQUIREMENTS
+% ===================
+
+% Geen deadlocks
+%TRUE
+%  [ true* ] < true > true
+
+% Er mag per station hoogstens één keer worden overgecheckt per reis.
+%TRUE
+    [ show(101, 2, 51) . card_message(true) . show(101, 0, 52) . card_message(true) . show(101, 0, 52) . card_message(false) ] false
+%   [ true* . (exists x:LocationId, y:CardId . show(101, 0, x) . card_message(true) . show(102, 0, x) ). card_message(false)] true
+
+% De kaart is initieel uitgecheckt.
+%TRUE
+%    [ show(101, 0, 52) . card_message(true) ] false
+
+
+
+
+% Een paaltje kan reistransacties en het saldo van de kaart aanpassen.
+% ? 
+ %   [ true* . show(x : int, 1) . card_message(true) . show(x : int, 1) ] true
+ %   [ true* . show(x : int, 2) . card_message(true) . show(x : int, 2) ] true
+
+% Als er wordt uitgecheckt zonder overcheck, moet het vervoerderstraject worden afgerekend. 
+% ?
+ %   [ true* . show(x : int, 1) . card_message(true) . show(x, 1) . card_message(true) ] true
+ %   [ true* . show(x : int, 2) . card_message(true) . show(x, 2) . card_message(true) ] true
+
+% Als er wordt overgecheckt moet het laatstgereisde vervoerderstraject worden afgerekend.
+% ?
+ %   [ true* . show(x : int, 1) . card_message(true) . show(x, 0) . card_message(true) ] true
+ %   [ true* . show(x : int, 2) . card_message(true) . show(x, 0) . card_message(true) ] true
+
+% Als er wordt uitgecheckt na een overcheck, moet het laatstgereisde vervoerderstraject worden afgerekend.
+% ?
+ %   [ true* . show(x : int, 0) . card_message(true) . show(x, 1) . card_message(true) ] true
+ %   [ true* . show(x : int, 0) . card_message(true) . show(x, 2) . card_message(true) ] true
