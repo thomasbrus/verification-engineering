@@ -5,30 +5,23 @@
     [ true* ] < true > true
 
 % Er mag per station hoogstens één keer worden overgecheckt per reis.
-    [ true* . show(101, 0, 52) . tau . card_message(true) . tau . show(101, 0, 52) . tau . card_message(false) ] false
+    [ true* . show(101, 0, 52) . tau . reader_status(true) . tau . show(101, 0, 52) . tau . reader_status(false) ] false
 
-%TRUE
-%    [ show(101, 0, 52) . tau . card_message(true) ] false
-
-
-
+% Er kan niet overgecheckt worden als er niet is ingecheckt. 
+    [ show(101, 0, 52) . tau . reader_status(true) ] false
 
 % Een paaltje kan reistransacties en het saldo van de kaart aanpassen.
-% ? 
  %   [ true* . show(x : int, 1) . card_message(true) . show(x : int, 1) ] true
  %   [ true* . show(x : int, 2) . card_message(true) . show(x : int, 2) ] true
 
 % Als er wordt uitgecheckt zonder overcheck, moet het vervoerderstraject worden afgerekend. 
-% ?
  %   [ true* . show(x : int, 1) . card_message(true) . show(x, 1) . card_message(true) ] true
  %   [ true* . show(x : int, 2) . card_message(true) . show(x, 2) . card_message(true) ] true
 
 % Als er wordt overgecheckt moet het laatstgereisde vervoerderstraject worden afgerekend.
-% ?
  %   [ true* . show(x : int, 1) . card_message(true) . show(x, 0) . card_message(true) ] true
  %   [ true* . show(x : int, 2) . card_message(true) . show(x, 0) . card_message(true) ] true
 
 % Als er wordt uitgecheckt na een overcheck, moet het laatstgereisde vervoerderstraject worden afgerekend.
-% ?
  %   [ true* . show(x : int, 0) . card_message(true) . show(x, 1) . card_message(true) ] true
  %   [ true* . show(x : int, 0) . card_message(true) . show(x, 2) . card_message(true) ] true
