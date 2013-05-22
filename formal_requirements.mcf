@@ -2,17 +2,13 @@
 % ===================
 
 % Geen deadlocks
-%TRUE
-%  [ true* ] < true > true
+    [ true* ] < true > true
 
 % Er mag per station hoogstens één keer worden overgecheckt per reis.
-%TRUE
-    [ show(101, 2, 51) . card_message(true) . show(101, 0, 52) . card_message(true) . show(101, 0, 52) . card_message(false) ] false
-%   [ true* . (exists x:LocationId, y:CardId . show(101, 0, x) . card_message(true) . show(102, 0, x) ). card_message(false)] true
+    [ true* . show(101, 0, 52) . tau . card_message(true) . tau . show(101, 0, 52) . tau . card_message(false) ] false
 
-% De kaart is initieel uitgecheckt.
 %TRUE
-%    [ show(101, 0, 52) . card_message(true) ] false
+%    [ show(101, 0, 52) . tau . card_message(true) ] false
 
 
 
