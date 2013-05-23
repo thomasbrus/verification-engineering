@@ -49,19 +49,27 @@ act
 proc
   Card(card_id : Int, card_data : CardStatusMapping, credit : Real) =
     sum carrier_id : CarrierId, location_id : LocationId . (0 <= carrier_id && carrier_id < 3) ->
-      show_card(card_id, carrier_id, location_id) .      
-      (
+      show_card(card_id, carrier_id, location_id) . (
         % In case of carrier
         (carrier_id != TLS) ->
-          send_card_info(card_id, card_data(carrier_id), card_data(TLS), credit) .
-          (action_status(true) . sum updated_location_id : LocationId, updated_credit : Real . update(card_id, updated_location_id, updated_credit) . Card(card_id, card_data[carrier_id -> updated_location_id][TLS -> -1], updated_credit) + 
-           action_status(false) . Card(card_id, card_data, credit)) +
+          send_card_info(card_id, card_data(carrier_id), card_data(TLS), credit) . (
+            action_status(true) .
+            sum updated_location_id : LocationId, updated_credit : Real .
+              update(card_id, updated_location_id, updated_credit) .
+              Card(card_id, card_data[carrier_id -> updated_location_id][TLS -> -1], updated_credit)
+          ) +
 
         % In case of TLS
         (carrier_id == TLS) ->
-          send_card_info_tls(card_id, card_data, credit) .
-          (action_status(true) . sum updated_card_status : CardStatusMapping, updated_credit : Real . update_tls(card_id, updated_card_status, updated_credit) . Card(card_id, updated_card_status, updated_credit) +
-            action_status(false) . Card(card_id, card_data, credit))
+          send_card_info_tls(card_id, card_data, credit) . (
+            action_status(true) .
+            (sum updated_card_status : CardStatusMapping, updated_credit : Real .
+              update_tls(card_id, updated_card_status, updated_credit) .
+              Card(card_id, updated_card_status, updated_credit)
+            ) +
+
+            action_status(false) . Card(card_id, card_data, credit) 
+          )
       );
 
   CarrierReader(carrier_id : CarrierId, location_id : LocationId) = 
@@ -109,7 +117,7 @@ proc
 
           % Trying to check over twice
           (received_card_status(TLS) != -1 && received_card_status(TLS) == location_id) ->
-	action_status(false) + 
+            action_status(false) + 
           
           % Not checked in
           (received_card_status(TLS) == -1 && received_card_status(NS) == -1 && received_card_status(SYNTUS) == -1) ->
@@ -120,8 +128,8 @@ proc
 
   System =
     Card(101, default_card_mapping, 5) ||
-    %Card(102, default_card_mapping, 5) ||
-    %Card(103, default_card_mapping, 5) ||
+    % Card(102, default_card_mapping, 5) ||
+    % Card(103, default_card_mapping, 5) ||
     CarrierReader(SYNTUS, 51) ||
     CarrierReader(SYNTUS, 52) ||
     CarrierReader(NS, 52) ||
