@@ -5,10 +5,10 @@
     [ true* ] < true > true
 
 % Er mag per station hoogstens één keer worden overgecheckt per reis.
-    [ true* . show(101, 0, 52) . tau . reader_status(true) . tau . show(101, 0, 52) . tau . reader_status(false) ] false
+    [ true* . show(100, 0, 51) . tau . reader_status(true) . tau . show(100, 0, 51) . tau . reader_status(false) ] false
 
 % Er kan niet overgecheckt worden als er niet is ingecheckt. 
-    [ show(101, 0, 52) . tau . reader_status(true) ] false
+    [ show(100, 0, 51) . tau . reader_status(true) ] false
 
 % Een paaltje kan reistransacties en het saldo van de kaart aanpassen.
  %   [ true* . show(x : int, 1) . card_message(true) . show(x : int, 1) ] true

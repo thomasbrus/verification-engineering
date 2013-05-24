@@ -28,9 +28,9 @@ var location_x, location_y : LocationId;
 eqn location_x == location_y -> prices(location_x, location_y) = 0;
     location_x != location_y -> prices(location_x, location_y) = price_table(min(location_x, location_y), max(location_x,location_y));
 
-eqn price_table(51, 52) = 1;
-eqn price_table(52, 53) = 2;
-eqn price_table(51, 53) = 3;
+eqn price_table(50, 51) = 1;
+eqn price_table(51, 52) = 2;
+eqn price_table(52, 50) = 3;
 
 % ACTIONS
 % =======
@@ -70,7 +70,7 @@ proc
       );
 
   CarrierReader(carrier_id : CarrierId, location_id : LocationId) = 
-    sum card_id : CardId . (101 <= card_id && card_id < 101 + NUMBER_OF_CARDS) ->
+    sum card_id : CardId . (100 <= card_id && card_id < 100 + NUMBER_OF_CARDS) ->
       read_card(card_id, carrier_id, location_id) .
       sum received_location_id : LocationId, received_location_id_tls : LocationId, received_credit : Real .
         receive_card_info(card_id, received_location_id, received_location_id_tls, received_credit) . (
@@ -98,7 +98,7 @@ proc
       );
 
   OvercheckReader(location_id : LocationId) = 
-    sum received_card_id : CardId . (101 <= received_card_id && received_card_id < 101 + NUMBER_OF_CARDS) ->
+    sum received_card_id : CardId . (100 <= received_card_id && received_card_id < 100 + NUMBER_OF_CARDS) ->
       read_card(received_card_id, TLS, location_id) .
       sum received_card_status : CardStatusMapping, received_credit : Real .
       receive_card_info_tls(received_card_id, received_card_status, received_credit) . (
@@ -145,14 +145,14 @@ proc
       );
 
   System =
-    Card(101, default_card_mapping, 5) ||
+    Card(100, default_card_mapping, 5) ||
+    % Card(101, default_card_mapping, 5) ||
     % Card(102, default_card_mapping, 5) ||
-    % Card(103, default_card_mapping, 5) ||
+    CarrierReader(SYNTUS, 50) ||
     CarrierReader(SYNTUS, 51) ||
-    CarrierReader(SYNTUS, 52) ||
+    CarrierReader(NS, 51) ||
     CarrierReader(NS, 52) ||
-    CarrierReader(NS, 53) ||
-    OvercheckReader(52);
+    OvercheckReader(51);
 
 % INITIALIZATION
 % ==============
