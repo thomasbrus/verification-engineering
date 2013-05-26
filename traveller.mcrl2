@@ -92,7 +92,7 @@ proc
 
           % Insufficient credit
           (received_location_id == -1 && received_location_id_tls == -1 && received_credit <= 0) ->
-            write(card_id, location_id, received_credit) . action_status(false, received_credit)
+            write(card_id, -1, received_credit) . action_status(false, received_credit)
         ) .
         CarrierReader(carrier_id, location_id)
       );
@@ -103,7 +103,7 @@ proc
       sum received_card_status : CardStatusMapping, received_credit : Real .
       receive_card_info_tls(received_card_id, received_card_status, received_credit) . (
         ( % Check out at NS, check in at TLS
-          (received_card_status(NS) != -1) ->
+          (received_card_status(NS) != -1 && received_card_status(SYNTUS) == -1 && received_card_status(TLS) == -1) ->
             ( write_tls(received_card_id,
                         received_card_status[NS-> -1][TLS-> location_id],
                         received_credit - prices(received_card_status(NS), location_id)) .
@@ -112,7 +112,7 @@ proc
             ) +
 
           % Check out at Syntus, check in at TLS
-          (received_card_status(SYNTUS) != -1) ->
+          (received_card_status(SYNTUS) != -1 && received_card_status(NS) == -1 && received_card_status(TLS) == -1) ->
             ( write_tls(received_card_id,
                         received_card_status[SYNTUS-> -1][TLS -> location_id],
                         received_credit - prices(received_card_status(SYNTUS), location_id)) .
