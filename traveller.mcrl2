@@ -119,6 +119,12 @@ proc
 
               action_status(true, received_credit - prices(received_card_status(SYNTUS), location_id))
             ) +
+
+          % Checked in at two carriers, refuse to overcheck
+          (received_card_status(SYNTUS) != -1 && received_card_status(NS) != -1) ->
+            ( write_tls(received_card_id, received_card_status, received_credit) .
+              action_status(false, received_credit)
+            ) +
         
           % Charge previous route, update TLS check-in
           (received_card_status(TLS) != -1 && received_card_status(TLS) != location_id) ->
