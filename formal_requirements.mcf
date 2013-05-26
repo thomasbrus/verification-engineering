@@ -1,15 +1,27 @@
 % FORMAL REQUIREMENTS
 % ===================
 
+%::BEWEZEN
 % Geen deadlocks
-    [ true* ] < true > true
+%     [ true* ] < true > true
 
 % Er mag per station hoogstens één keer worden overgecheckt per reis.
-    [ true* . show(100, 0, 51) . tau . reader_status(true) . tau . show(100, 0, 51) . tau . reader_status(false) ] false
+%     [ true * . 
+%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) . 
+%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) 
+%     ] false
 
 % Er kan niet overgecheckt worden als er niet is ingecheckt. 
-    [ show(100, 0, 51) . tau . reader_status(true) ] false
+%     [ (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
+%        show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=10) && reader_status(true, x)) 
+%     ] false
 
+% Het paaltje toont na het registeren de uitkomst van de actie en het huidige saldo.
+%      [ true * . (exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)) . 
+%        tau . tau. !(exists x:Int, b:Bool . val(-5<=x && x<=5) && reader_status(b, x)) 
+%      ] false
+
+%::NOG TE BEWIJZEN
 % Een paaltje kan reistransacties en het saldo van de kaart aanpassen.
  %   [ true* . show(x : int, 1) . card_message(true) . show(x : int, 1) ] true
  %   [ true* . show(x : int, 2) . card_message(true) . show(x : int, 2) ] true
