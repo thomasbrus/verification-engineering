@@ -8,6 +8,7 @@
 % Er mag per station hoogstens één keer worden overgecheckt per reis.
 %     [ true * . 
 %      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) . 
+%      (!(exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)))* .
 %      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) 
 %     ] false
 
@@ -17,23 +18,30 @@
 %     ] false
 
 % Het paaltje toont na het registeren de uitkomst van de actie en het huidige saldo.
-%      [ true * . (exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)) . 
-%        tau . tau. !(exists x:Int, b:Bool . val(-5<=x && x<=5) && reader_status(b, x)) 
-%      ] false
+%     [ true * . (exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)) . 
+%       tau . tau. !(exists x:Int, b:Bool . val(-5<=x && x<=5) && reader_status(b, x)) 
+%     ] false
 
 %::NOG TE BEWIJZEN
-% Een paaltje kan reistransacties en het saldo van de kaart aanpassen.
- %   [ true* . show(x : int, 1) . card_message(true) . show(x : int, 1) ] true
- %   [ true* . show(x : int, 2) . card_message(true) . show(x : int, 2) ] true
-
 % Als er wordt uitgecheckt zonder overcheck, moet het vervoerderstraject worden afgerekend. 
- %   [ true* . show(x : int, 1) . card_message(true) . show(x, 1) . card_message(true) ] true
- %   [ true* . show(x : int, 2) . card_message(true) . show(x, 2) . card_message(true) ] true
+ %   [ true* . show(100, 2, 50) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) .
+ %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
+ %     show(100, 2, 51) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x))  
+ %   ] false
 
 % Als er wordt overgecheckt moet het laatstgereisde vervoerderstraject worden afgerekend.
- %   [ true* . show(x : int, 1) . card_message(true) . show(x, 0) . card_message(true) ] true
- %   [ true* . show(x : int, 2) . card_message(true) . show(x, 0) . card_message(true) ] true
+ %   [ true* . show(100, 2, 50) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) .
+ %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
+ %     show(100, 0, 51) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x))  
+ %   ] false
+
 
 % Als er wordt uitgecheckt na een overcheck, moet het laatstgereisde vervoerderstraject worden afgerekend.
- %   [ true* . show(x : int, 0) . card_message(true) . show(x, 1) . card_message(true) ] true
- %   [ true* . show(x : int, 0) . card_message(true) . show(x, 2) . card_message(true) ] true
+ %   [ true* . show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) .
+ %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
+ %     show(100, 1, 52) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x))  
+ %   ] false
+
+% Een paaltje kan reistransacties en het saldo van de kaart aanpassen.
+ %   [ true* . show(x : int, 1) . reader_status(true) . show(x : int, 1) ] false
+ %   [ true* . show(x : int, 2) . reader_status(true) . show(x : int, 2) ] false
