@@ -7,9 +7,9 @@
 
 % Er mag per station hoogstens één keer worden overgecheckt per reis.
 %     [ true * . 
-%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(100, CHECKIN_SUCCESSFUL, x)) . 
+%      show(100, 0, 51) . tau*. (exists x:Int . val(0<=x && x<=5) && reader_status(100, CHECKIN_SUCCESSFUL, x)) . 
 %      (!(exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)))* .
-%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(100, CHECKIN_SUCCESSFUL, x)) 
+%      show(100, 0, 51) . tau* . (exists x:Int . val(0<=x && x<=5) && reader_status(100, CHECKIN_SUCCESSFUL, x)) 
 %     ] false
 
 % Er kan niet overgecheckt worden als er niet is ingecheckt. 
