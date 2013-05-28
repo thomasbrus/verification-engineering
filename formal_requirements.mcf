@@ -22,12 +22,16 @@
 %       tau . tau. !(exists x:Int, b:Bool . val(-5<=x && x<=5) && reader_status(b, x)) 
 %     ] false
 
+% Als je incheckt en daarna uitcheckt op hetzelfde station, worden geen kosten in rekening gebracht. 
+%     forall x:Int. val(0<=x && x<=5) => (
+%       [ true* . show(100, 2, 50) . tau . tau . reader_status(true, x) . 
+%         !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 2, 50) . tau . tau
+%       ]
+%       < reader_status(true, x) || reader_status(false, x) > true )
+
+
 %::NOG TE BEWIJZEN
 % Als er wordt uitgecheckt zonder overcheck, moet het vervoerderstraject worden afgerekend. 
- %   [ true* . show(100, 2, 50) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) .
- %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
- %     show(100, 2, 51) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x))  
- %   ] false
 
 % Als er wordt overgecheckt moet het laatstgereisde vervoerderstraject worden afgerekend.
  %   [ true* . show(100, 2, 50) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) .
