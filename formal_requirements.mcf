@@ -7,34 +7,34 @@
 
 % Er mag per station hoogstens één keer worden overgecheckt per reis.
 %     [ true * . 
-%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(CHECKIN_SUCCESSFUL, x)) . 
+%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(100, CHECKIN_SUCCESSFUL, x)) . 
 %      (!(exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)))* .
-%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(CHECKIN_SUCCESSFUL, x)) 
+%      show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(100, CHECKIN_SUCCESSFUL, x)) 
 %     ] false
 
 % Er kan niet overgecheckt worden als er niet is ingecheckt. 
-%     [ (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
-%        show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=10) && reader_status(CHECKIN_SUCCESSFUL, x)) 
+%     [ (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(100, b, x)))* .
+%        show(100, 0, 51) . tau* . (exists x:Int . val(0<=x && x<=10) && reader_status(100, CHECKIN_SUCCESSFUL, x)) 
 %     ] false
 
 % Het paaltje toont na het registeren de uitkomst van de actie en het huidige saldo.
 %     [ true * . (exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)) . 
-%       tau . tau. !(exists x:Int, s:StatusId . val(-5<=x && x<=5 && -1<=s && s<=1) && reader_status(b, x)) 
+%       tau* . !(exists x:Int, s:StatusId . val(-5<=x && x<=5 && -1<=s && s<=1) && reader_status(100, b, x)) 
 %     ] false
 
 % Als je incheckt en daarna uitcheckt op hetzelfde station, worden geen kosten in rekening gebracht. 
 %     forall x:Int. val(0<=x && x<=5) => (
-%       [ true* . show(100, 2, 50) . tau . tau . reader_status(SUCCESSFUL_CHECKIN, x) . 
-%         !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 2, 50) . tau . tau
+%       [ true* . show(100, 2, 50) . tau*. reader_status(100, SUCCESSFUL_CHECKIN, x) . 
+%         !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 2, 50)
 %       ]
-%       < reader_status(SUCCESSFUL_CHECKOUT, x) > true )
+%       < tau* . reader_status(100, SUCCESSFUL_CHECKOUT, x) > true )
 
 % Als je incheckt en uitcheckt bij één vervoerder, moet de correcte prijs worden afgerekend op basis van de prijzentabel.
       forall x:Int . val(0<=x && x<=5) => (
-        [ true* . show(100, 2, 50) . tau . tau . reader_status(SUCCESSFUL_CHECKIN, x) .
-          !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 2, 51) . tau . tau
+        [ true* . show(100, 2, 50) . tau* . reader_status(100, SUCCESSFUL_CHECKIN, x) .
+          !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 2, 51) 
         ]
-        < reader_status(SUCCESSFUL_CHECKOUT, x-prices(50,51)) > true )
+        < tau* . reader_status(100, SUCCESSFUL_CHECKOUT, x-prices(50,51)) > true )
 
 
 
@@ -42,18 +42,18 @@
 % Als er wordt uitgecheckt zonder overcheck, moet het vervoerderstraject worden afgerekend. 
 
 % Als er wordt overgecheckt moet het laatstgereisde vervoerderstraject worden afgerekend.
- %   [ true* . show(100, 2, 50) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) .
- %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
- %     show(100, 0, 51) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x))  
+ %   [ true* . show(100, 2, 50) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(100, true, x)) .
+ %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(100, b, x)))* .
+ %     show(100, 0, 51) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(100, true, x))  
  %   ] false
 
 
 % Als er wordt uitgecheckt na een overcheck, moet het laatstgereisde vervoerderstraject worden afgerekend.
- %   [ true* . show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x)) .
- %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(b, x)))* .
- %     show(100, 1, 52) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(true, x))  
+ %   [ true* . show(100, 0, 51) . tau . tau . (exists x:Int . val(0<=x && x<=5) && reader_status(100, true, x)) .
+ %     (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(100, b, x)))* .
+ %     show(100, 1, 52) . tau . tau  . (exists x:Int . val(0<=x && x<=5) && reader_status(100, true, x))  
  %   ] false
 
 % Een paaltje kan reistransacties en het saldo van de kaart aanpassen.
- %   [ true* . show(x : int, 1) . reader_status(true) . show(x : int, 1) ] false
- %   [ true* . show(x : int, 2) . reader_status(true) . show(x : int, 2) ] false
+ %   [ true* . show(x : int, 1) . reader_status(100, true) . show(x : int, 1) ] false
+ %   [ true* . show(x : int, 2) . reader_status(100, true) . show(x : int, 2) ] false

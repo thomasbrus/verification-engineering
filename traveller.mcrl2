@@ -50,7 +50,7 @@ act
   send_card_info_tls, receive_card_info_tls, card_info_tls: CardId # CardStatusMapping # Real;
   write, update, process: CardId # LocationId # Real;
   write_tls, update_tls, process_tls: CardId # CardStatusMapping # Real;
-  action_status, reader_status : StatusId # Real;
+  action_status, reader_status : CardId # StatusId # Real;
 
 % PROCESSES
 % =========
@@ -64,7 +64,7 @@ proc
           send_card_info(card_id, card_data(carrier_id), card_data(TLS), credit) . (
             sum updated_location_id : LocationId, updated_credit : Real .
               update(card_id, updated_location_id, updated_credit) .
-              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) -> action_status(received_status_id, updated_credit) .
+              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) -> action_status(card_id, received_status_id, updated_credit) .
               Card(card_id, card_data[carrier_id -> updated_location_id][TLS -> -1], updated_credit)
           ) +
 
@@ -73,7 +73,7 @@ proc
           send_card_info_tls(card_id, card_data, credit) . (
             sum updated_card_status : CardStatusMapping, updated_credit : Real .
               update_tls(card_id, updated_card_status, updated_credit) .
-              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) -> action_status(received_status_id, updated_credit) . 
+              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) -> action_status(card_id, received_status_id, updated_credit) . 
               Card(card_id, updated_card_status, updated_credit)
           )
       );
@@ -86,74 +86,74 @@ proc
         ( % Check out at carrier, charge correct fee
           (received_location_id != -1) ->
             ( write(card_id, -1, received_credit - prices(location_id, received_location_id)) .
-              action_status(SUCCESSFUL_CHECKOUT, received_credit - prices(location_id, received_location_id))
+              action_status(card_id, SUCCESSFUL_CHECKOUT, received_credit - prices(location_id, received_location_id))
             ) +
 
           % Check out at TLS, charge correct fee
           (received_location_id == -1 && received_location_id_tls != -1) ->
             ( write(card_id, -1, received_credit - prices(location_id, received_location_id_tls)) .
-              action_status(SUCCESSFUL_CHECKOUT, received_credit - prices(location_id, received_location_id_tls))
+              action_status(card_id, SUCCESSFUL_CHECKOUT, received_credit - prices(location_id, received_location_id_tls))
             ) +
 
           % Check in at carrier
           (received_location_id == -1 && received_location_id_tls == -1 && received_credit > 0) ->
-            (write(card_id, location_id, received_credit) . action_status(SUCCESSFUL_CHECKIN, received_credit)) +
+            (write(card_id, location_id, received_credit) . action_status(card_id, SUCCESSFUL_CHECKIN, received_credit)) +
 
           % Insufficient credit
           (received_location_id == -1 && received_location_id_tls == -1 && received_credit <= 0) ->
-            write(card_id, -1, received_credit) . action_status(UNSUCCESSFUL, received_credit)
+            write(card_id, -1, received_credit) . action_status(card_id, UNSUCCESSFUL, received_credit)
         ) .
         CarrierReader(carrier_id, location_id)
       );
 
   OvercheckReader(location_id : LocationId) = 
-    sum received_card_id : CardId . (100 <= received_card_id && received_card_id < 100 + NUMBER_OF_CARDS) ->
-      read_card(received_card_id, TLS, location_id) .
+    sum card_id : CardId . (100 <= card_id && card_id < 100 + NUMBER_OF_CARDS) ->
+      read_card(card_id, TLS, location_id) .
       sum received_card_status : CardStatusMapping, received_credit : Real .
-      receive_card_info_tls(received_card_id, received_card_status, received_credit) . (
+      receive_card_info_tls(card_id, received_card_status, received_credit) . (
         ( % Check out at NS, check in at TLS
           (received_card_status(NS) != -1 && received_card_status(SYNTUS) == -1 && received_card_status(TLS) == -1) ->
-            ( write_tls(received_card_id,
+            ( write_tls(card_id,
                         received_card_status[NS-> -1][TLS-> location_id],
                         received_credit - prices(received_card_status(NS), location_id)) .
 
-              action_status(SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(NS), location_id))
+              action_status(card_id, SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(NS), location_id))
             ) +
 
           % Check out at Syntus, check in at TLS
           (received_card_status(SYNTUS) != -1 && received_card_status(NS) == -1 && received_card_status(TLS) == -1) ->
-            ( write_tls(received_card_id,
+            ( write_tls(card_id,
                         received_card_status[SYNTUS-> -1][TLS -> location_id],
                         received_credit - prices(received_card_status(SYNTUS), location_id)) .
 
-              action_status(SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(SYNTUS), location_id))
+              action_status(card_id, SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(SYNTUS), location_id))
             ) +
 
           % Checked in at two carriers, refuse to overcheck
           (received_card_status(SYNTUS) != -1 && received_card_status(NS) != -1) ->
-            ( write_tls(received_card_id, received_card_status, received_credit) .
-              action_status(SUCCESSFUL_CHECKIN, received_credit)
+            ( write_tls(card_id, received_card_status, received_credit) .
+              action_status(card_id, SUCCESSFUL_CHECKIN, received_credit)
             ) +
         
           % Charge previous route, update TLS check-in
           (received_card_status(TLS) != -1 && received_card_status(TLS) != location_id) ->
-            ( write_tls(received_card_id,
+            ( write_tls(card_id,
                         received_card_status[TLS -> location_id],
                         received_credit - prices(received_card_status(TLS), location_id)) .
 
-              action_status(SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(TLS), location_id))
+              action_status(card_id, SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(TLS), location_id))
             ) +
 
           % Trying to check over twice
           (received_card_status(TLS) != -1 && received_card_status(TLS) == location_id) ->
-            ( write_tls(received_card_id, received_card_status, received_credit) .
-              action_status(UNSUCCESSFUL, received_credit)
+            ( write_tls(card_id, received_card_status, received_credit) .
+              action_status(card_id, UNSUCCESSFUL, received_credit)
             ) + 
           
           % Not checked in
           (received_card_status(TLS) == -1 && received_card_status(NS) == -1 && received_card_status(SYNTUS) == -1) ->
-            ( write_tls(received_card_id, received_card_status, received_credit) .
-              action_status(UNSUCCESSFUL, received_credit)
+            ( write_tls(card_id, received_card_status, received_credit) .
+              action_status(card_id, UNSUCCESSFUL, received_credit)
             )
         ) .         
         OvercheckReader(location_id) 
