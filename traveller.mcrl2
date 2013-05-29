@@ -123,7 +123,7 @@ proc
       sum received_card_status : CardStatusMapping, received_credit : Real, received_is_checked_in : Bool .
       receive_card_info_tls(card_id, received_card_status, received_credit, received_is_checked_in) . (
         ( % Check over
-          (received_is_checked_in && received_card_status(TLS) != location_id) ->
+          (received_is_checked_in && received_card_status(TLS) != location_id && received_card_status(TLS) != -1) ->
             ( write_tls(card_id,
                         received_card_status[TLS -> location_id],
                         received_credit - prices(received_card_status(TLS), location_id),
