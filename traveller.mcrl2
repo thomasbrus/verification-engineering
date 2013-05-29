@@ -1,7 +1,6 @@
 % CONFIG
 % ======
 
-
 % Aliasses
 sort LocationId = Int;
 sort CarrierId = Int;
@@ -22,7 +21,6 @@ eqn SUCCESSFUL_CHECKIN = 1;
 
 map NUMBER_OF_CARDS : Nat;
 eqn NUMBER_OF_CARDS = 3;
-
 
 % Mapping from carrier ids to location ids (-1 when not checked in)
 sort CardStatusMapping = CarrierId -> LocationId;
@@ -48,7 +46,7 @@ act
   show_card, read_card, show: CardId # CarrierId # LocationId; 
   send_card_info, receive_card_info, card_info: CardId # LocationId # LocationId # Real;
   send_card_info_tls, receive_card_info_tls, card_info_tls: CardId # CardStatusMapping # Real;
-  write, update, process: CardId # LocationId # Real;
+  write, update, process: CardId # LocationId # Real # Bool;
   write_tls, update_tls, process_tls: CardId # CardStatusMapping # Real;
   action_status, reader_status : CardId # StatusId # Real;
 
@@ -56,25 +54,27 @@ act
 % =========
 
 proc
-  Card(card_id : Int, card_data : CardStatusMapping, credit : Real) =
+  Card(card_id : Int, card_data : CardStatusMapping, credit : Real, is_checked_in : Bool) =
     sum carrier_id : CarrierId, location_id : LocationId . (0 <= carrier_id && carrier_id < 3) ->
       show_card(card_id, carrier_id, location_id) . (
         % In case of carrier
         (carrier_id != TLS) ->
-          send_card_info(card_id, card_data(carrier_id), card_data(TLS), credit) . (
-            sum updated_location_id : LocationId, updated_credit : Real .
-              update(card_id, updated_location_id, updated_credit) .
-              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) -> action_status(card_id, received_status_id, updated_credit) .
-              Card(card_id, card_data[carrier_id -> updated_location_id][TLS -> -1], updated_credit)
+          send_card_info(card_id, card_data(carrier_id), card_data(TLS), credit, is_checked_in) . (
+            sum updated_location_id : LocationId, updated_credit : Real . updated_is_checked_in : Bool .
+              update(card_id, updated_location_id, updated_credit, updated_is_checked_in) .
+              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) ->
+                action_status(card_id, received_status_id, updated_credit) .
+              Card(card_id, card_data[carrier_id -> updated_location_id][TLS -> -1], updated_credit, updated_is_checked_in)
           ) +
 
         % In case of TLS
         (carrier_id == TLS) ->
-          send_card_info_tls(card_id, card_data, credit) . (
-            sum updated_card_status : CardStatusMapping, updated_credit : Real .
-              update_tls(card_id, updated_card_status, updated_credit) .
-              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) -> action_status(card_id, received_status_id, updated_credit) . 
-              Card(card_id, updated_card_status, updated_credit)
+          send_card_info_tls(card_id, card_data, credit, is_checked_in) . (
+            sum updated_card_status : CardStatusMapping, updated_credit : Real . updated_is_checked_in : Bool .
+              update_tls(card_id, updated_card_status, updated_credit, updated_is_checked_in) .
+              sum received_status_id : StatusId . (-1<=received_status_id && received_status_id<=1) ->
+                action_status(card_id, received_status_id, updated_credit) . 
+              Card(card_id, updated_card_status, updated_credit, updated_is_checked_in)
           )
       );
 
@@ -82,26 +82,35 @@ proc
     sum card_id : CardId . (100 <= card_id && card_id < 100 + NUMBER_OF_CARDS) ->
       read_card(card_id, carrier_id, location_id) .
       sum received_location_id : LocationId, received_location_id_tls : LocationId, received_credit : Real .
-        receive_card_info(card_id, received_location_id, received_location_id_tls, received_credit) . (
-        ( % Check out at carrier, charge correct fee
-          (received_location_id != -1) ->
-            ( write(card_id, -1, received_credit - prices(location_id, received_location_id)) .
+        receive_card_info(card_id, received_location_id, received_location_id_tls, received_credit, received_is_checked_in) . (
+        ( 
+          % Check in
+          (!received_is_checked_in && received_credit > 0) ->
+            ( write(card_id, location_id, received_credit, received_is_checked_in) .
+              action_status(card_id, SUCCESSFUL_CHECKIN, received_credit)) +
+
+          % Check in (but was already checked in at another carrier)
+          (received_is_checked_in && received_loc_id == -1 && received_loc_id_tls == -1) ->
+            ( write(card_id, -1, received_credit, received_is_checked_in) .
+              action_status(card_id, UNSUCCESSFUL, received_credit)) +
+
+          % Check in (but insufficient credit)
+          (!received_is_checked_in && received_credit <= 0)) ->
+            ( write(card_id, -1, received_credit, received_is_checked_in) .
+              action_status(card_id, UNSUCCESSFUL, received_credit)) +
+
+          % Check out at (was checked in at this carrier)
+          (received_is_checked_in && received_location_id != -1) ->
+            ( write(card_id, -1, received_credit - prices(location_id, received_location_id), received_is_checked_in) .
               action_status(card_id, SUCCESSFUL_CHECKOUT, received_credit - prices(location_id, received_location_id))
             ) +
 
-          % Check out at TLS, charge correct fee
-          (received_location_id == -1 && received_location_id_tls != -1) ->
-            ( write(card_id, -1, received_credit - prices(location_id, received_location_id_tls)) .
+          % Check out at (was checked in at TLS)
+          (received_is_checked_in && received_location_id == -1 && received_location_id_tls != -1) ->
+            ( write(card_id, -1, received_credit - prices(location_id, received_location_id_tls), received_is_checked_in) .
               action_status(card_id, SUCCESSFUL_CHECKOUT, received_credit - prices(location_id, received_location_id_tls))
             ) +
 
-          % Check in at carrier
-          (received_location_id == -1 && received_location_id_tls == -1 && received_credit > 0) ->
-            (write(card_id, location_id, received_credit) . action_status(card_id, SUCCESSFUL_CHECKIN, received_credit)) +
-
-          % Insufficient credit
-          (received_location_id == -1 && received_location_id_tls == -1 && received_credit <= 0) ->
-            write(card_id, -1, received_credit) . action_status(card_id, UNSUCCESSFUL, received_credit)
         ) .
         CarrierReader(carrier_id, location_id)
       );
