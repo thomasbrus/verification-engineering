@@ -1,0 +1,3 @@
+% #5: Het paaltje toont na het registeren de uitkomst van de actie en het huidige saldo.
+[ true * . (exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)) ] <
+  tau* . (exists x:Int, s:StatusId . val(-5<=x && x<=5 && -1<=s && s<=1) && reader_status(100, s, x))> true

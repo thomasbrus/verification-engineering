@@ -1,0 +1,6 @@
+% #2: Er mag per station hoogstens één keer worden overgecheckt per reis.
+[ true * . 
+  show(100, 0, 51) . tau*. (exists x:Int . val(0<=x && x<=5) && reader_status(100, SUCCESSFUL_CHECKIN, x)) . 
+  (!(exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)))* .
+  show(100, 0, 51) . tau* . (exists x:Int . val(0<=x && x<=5) && reader_status(100, SUCCESSFUL_CHECKIN, x)) 
+] false

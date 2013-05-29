@@ -1,0 +1,2 @@
+% #1: Geen deadlocks
+[ true* ] < true > true

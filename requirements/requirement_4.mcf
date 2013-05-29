@@ -1,0 +1,4 @@
+% #4: Een kaart kan niet overchecken als niet is ingecheckt. 
+[ true* . (exists x:Int . val(-5<=x && x<=5) && reader_status(100, SUCCESSFUL_CHECKOUT, x) . (!(exists x:CarrierId, y:LocationId . val(0<=x && x<=2 && 50<=y && y<=52) && show(100, x, y)))* . (exists z:LocationId . val(0<=z && z<=52) && show(100, 0, z)) . tau* . 
+  (exists x:Int . val(0<=x && x<=10) && reader_status(100, SUCCESSFUL_CHECKIN, x)) )
+] false

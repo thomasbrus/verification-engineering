@@ -1,0 +1,4 @@
+% #3: Een kaart is initieel uitgecheckt.
+[ (!(exists b:Bool, x:Int . val(0<=x && x<=5) && reader_status(100, b, x)))* .
+  show(100, 0, 51) . tau* . (exists x:Int . val(0<=x && x<=10) && reader_status(100, SUCCESSFUL_CHECKIN, x)) 
+] false

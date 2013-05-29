@@ -1,0 +1,6 @@
+% #7: Als er wordt ingecheckt en uitgecheckt bij één vervoerder, moet de correcte prijs worden afgerekend op basis van de prijzentabel.
+forall x:Int . val(0<=x && x<=5) => (
+  [ true* . show(100, 2, 50) . tau* . reader_status(100, SUCCESSFUL_CHECKIN, x) .
+    !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 2, 51) 
+  ]
+  < tau* . reader_status(100, SUCCESSFUL_CHECKOUT, x-prices(50,51)) > true )
