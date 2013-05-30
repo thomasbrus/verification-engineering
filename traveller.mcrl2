@@ -37,7 +37,7 @@ eqn location_x == location_y -> prices(location_x, location_y) = 0;
 
 eqn price_table(50, 51) = 1;
 eqn price_table(51, 52) = 2;
-eqn price_table(52, 50) = 3;
+eqn price_table(50, 52) = 3;
 
 % ACTIONS
 % =======
