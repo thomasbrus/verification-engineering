@@ -1,8 +1,8 @@
 % #10: De prijs van een reis via meerdere vervoerders is gelijk aan de som van de prijzen van de afzonderlijke losse vervoerderstrajecten. We veronderstellen dat deze prijzen lineair zijn opgebouwd.
 
-forall x:Int . val(0<=x && x<=5) => (
-  [ true* . show(100, 1, 50) . tau* . reader_status(100, SUCCESSFUL_CHECKIN, x) .
-    !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 0, 51) .
-    reader_status(100, SUCCESSFUL_CHECKIN, x) .
-    !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 2, 52) ]
-  < tau* . reader_status(100, SUCCESSFUL_CHECKIN, x-prices(50,52)) > true )
+forall x:Int, y:Int . val(0<=x && x<=5 && -2<=y && y<=x) => (
+  [ true* . show(100, 2, 50) . tau* . reader_status(100, SUCCESSFUL_CHECKIN, x) .
+    !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 0, 51) . tau* .
+    reader_status(100, SUCCESSFUL_CHECKIN, y) .
+    !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 1, 52) ]
+  < tau* . reader_status(100, SUCCESSFUL_CHECKOUT, x-prices(50,52)) > true )
