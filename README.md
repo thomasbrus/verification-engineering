@@ -1,7 +1,7 @@
-Verification Engineering
-========================
+# Verification Engineering
 
-### Pro tip (Mac OS X only)
+## Instructies
+
 Symlink mcrl22lps en lpsxsim naar ./bin:
 
     ln -s /Applications/mCRL2/Applications/mcrl22lps ~/Code/verification-engineering/bin/mcrl22lps
