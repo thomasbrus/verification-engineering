@@ -4,8 +4,9 @@
 
 Symlink mcrl22lps en lpsxsim naar ./bin:
 
-    ln -s /Applications/mCRL2/Applications/mcrl22lps ~/Code/verification-engineering/bin/mcrl22lps
-    ln -s /Applications/mCRL2/Applications/lpsxsim.app/Contents/MacOS/lpsxsim ./bin/lpsxsim
+    mkdir -p bin
+    ln -s /Applications/mCRL2/Applications/mcrl22lps bin/mcrl22lps
+    ln -s /Applications/mCRL2/Applications/lpsxsim.app/Contents/MacOS/lpsxsim bin/lpsxsim
 
 Voer dan dit uit om mcrl2 te compileren:
 
