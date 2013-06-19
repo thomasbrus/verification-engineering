@@ -90,7 +90,7 @@ proc
               action_status(card_id, SUCCESSFUL_CHECKIN, received_credit)
             ) +
 
-          % Check in (but was already checked in at another carrier)
+          % Cannot check in (was already checked in at another carrier)
           (received_is_checked_in && received_location_id == -1 && received_location_id_tls == -1) ->
             ( write(card_id, -1, received_credit, received_is_checked_in) .
               action_status(card_id, UNSUCCESSFUL, received_credit)
