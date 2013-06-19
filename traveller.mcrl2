@@ -90,7 +90,7 @@ proc
               action_status(card_id, SUCCESSFUL_CHECKIN, received_credit)
             ) +
 
-          % Cannot check in (already checked in at another carrier)
+          % Check in (but was already checked in at another carrier)
           (received_is_checked_in && received_location_id == -1 && received_location_id_tls == -1) ->
             ( write(card_id, -1, received_credit, received_is_checked_in) .
               action_status(card_id, UNSUCCESSFUL, received_credit)
@@ -123,13 +123,23 @@ proc
       sum received_card_status : CardStatusMapping, received_credit : Real, received_is_checked_in : Bool .
       receive_card_info_tls(card_id, received_card_status, received_credit, received_is_checked_in) . (
         ( % Check over
-          (received_is_checked_in && received_card_status(TLS) != location_id && received_card_status(TLS) != -1) ->
+          (received_is_checked_in && received_card_status(TLS) != location_id && received_card_status(TLS) != -1 && (received_credit - prices(received_card_status(TLS), location_id) > 0)) ->
             ( write_tls(card_id,
                         received_card_status[TLS -> location_id],
                         received_credit - prices(received_card_status(TLS), location_id),
                         true) .
 
               action_status(card_id, SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(TLS), location_id))
+            ) +
+
+          % Check over (but insufficient credit)
+          (received_is_checked_in && received_card_status(TLS) != location_id && received_card_status(TLS) != -1 && (received_credit - prices(received_card_status(TLS), location_id) <= 0)) ->
+            ( write_tls(card_id,
+                        received_card_status[TLS -> -1],
+                        received_credit - prices(received_card_status(TLS), location_id),
+                        false) .
+
+              action_status(card_id, SUCCESSFUL_CHECKOUT, received_credit - prices(received_card_status(TLS), location_id))
             ) +
 
           % Check over (but checked in at two carriers)
@@ -150,8 +160,8 @@ proc
               action_status(card_id, UNSUCCESSFUL, received_credit)
             ) +
 
-          % Check out at NS (was checked in at TLS)
-          (received_is_checked_in && received_card_status(NS) != -1) ->
+          % Check out at NS 
+          (received_is_checked_in && received_card_status(NS) != -1 && (received_credit - prices(received_card_status(NS), location_id) > 0)) ->
             ( write_tls(card_id,
                         received_card_status[NS-> -1][TLS-> location_id],
                         received_credit - prices(received_card_status(NS), location_id),
@@ -160,14 +170,34 @@ proc
               action_status(card_id, SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(NS), location_id))
             ) +
 
-          % Check out at Syntus (was checked in at TLS)
-          (received_is_checked_in && received_card_status(SYNTUS) != -1) ->
+          % Check out at NS (but insufficient credit)
+          (received_is_checked_in && received_card_status(NS) != -1 && (received_credit - prices(received_card_status(NS), location_id) <= 0)) ->
+            ( write_tls(card_id,
+                        received_card_status[NS-> -1],
+                        received_credit - prices(received_card_status(NS), location_id),
+                        false) .
+
+              action_status(card_id, SUCCESSFUL_CHECKOUT, received_credit - prices(received_card_status(NS), location_id))
+            ) +
+
+          % Check out at Syntus
+          (received_is_checked_in && received_card_status(SYNTUS) != -1 && (received_credit - prices(received_card_status(SYNTUS), location_id) > 0)) ->
             ( write_tls(card_id,
                         received_card_status[SYNTUS-> -1][TLS -> location_id],
                         received_credit - prices(received_card_status(SYNTUS), location_id),
                         received_is_checked_in) .
 
               action_status(card_id, SUCCESSFUL_CHECKIN, received_credit - prices(received_card_status(SYNTUS), location_id))
+            ) +
+
+          % Check out at Syntus (but insufficient credit)
+          (received_is_checked_in && received_card_status(SYNTUS) != -1 && (received_credit - prices(received_card_status(SYNTUS), location_id)) <= 0) ->
+            ( write_tls(card_id,
+                        received_card_status[SYNTUS-> -1],
+                        received_credit - prices(received_card_status(SYNTUS), location_id),
+                        false) .
+
+              action_status(card_id, SUCCESSFUL_CHECKOUT, received_credit - prices(received_card_status(SYNTUS), location_id))
             )
 
         ) .         

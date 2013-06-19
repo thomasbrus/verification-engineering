@@ -3,4 +3,4 @@ forall x:Int . val(0<=x && x<=5) => (
   [ true* . show(100, 2, 50) . tau* . reader_status(100, SUCCESSFUL_CHECKIN, x) .
     !(exists a:CarrierId, b:LocationId . val(0<=a && a<=2 && 50<=b && b<=52) && show(100, a, b))* . show(100, 0, 51)
   ]
-  < tau* . reader_status(100, SUCCESSFUL_CHECKIN, x-prices(50,51)) > true )
+  < tau* . exists s:StatusId  . val(0<=s && s<=1) && reader_status(100, s, x-prices(50,51)) > true )
