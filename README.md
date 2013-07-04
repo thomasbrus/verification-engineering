@@ -25,12 +25,12 @@ Om traveller.mcrl2 te compileren naar traveller.lps gebruiken we het volgende co
 
     $ ./bin/mcrl22lps traveller.mcrl2 traveller.lps
 
-De formele eisen checken we door lps2pbes uit te voeren:
+De formele eis zetten we vervolgens om naar een pbes-bestand:
 
     $ ./bin/lps2pbes traveller.lps traveller.pbes \ 
     --formula=./requirements/requirement_<x>.mcf --structured --verbose
 
-En uiteindelijk kunnen we checken of aan de eisen is voldaan:
+En uiteindelijk kunnen we checken of het model aan de eis voldoet:
 
     $ ./bin/pbes2bool traveller.pbes --pbes-rewriter=quantifier-all \ 
     --rewriter=jitty --strategy=0 --verbose
@@ -40,11 +40,11 @@ Om traveller.mcrl2 te compileren naar traveller.lps gebruiken we het volgende co
 
     $ ./bin/mcrl22lps -vfDn traveller.mcrl2 traveler.lps
 
-De formele eisen checken we door lps2pbes uit te voeren:
+De formele eis zetten we vervolgens om naar een pbes-bestand:
 
     $ ./bin/lps2pbes -s -frequirements/requirement_<x>.mcf traveler.lps \
     traveller.pbes 
 
-En uiteindelijk kunnen we checken of aan de eisen is voldaan:
+En uiteindelijk kunnen we checken of het model aan de eis voldoet:
 
     $ ./bin/pbes2lts-sym --pg-solve -rgs traveller.pbes
